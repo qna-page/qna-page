@@ -4,6 +4,9 @@
 *.dll
 *.so
 *.dylib
+*.sqlite
+*.sqlite3
+*.db
 
 # Test binary, built with `go test -c`
 *.test
