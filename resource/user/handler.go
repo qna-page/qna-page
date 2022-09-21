@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/qna-page/qna-page/utils"
 )
 
 // UserHandler is used to inject everything the handler needs
@@ -60,5 +61,42 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	// Prepare response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	w.Write(b)
+}
+
+type UserInputJSON struct {
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+	DisplayName string `json:"displayName"`
+}
+
+type UserOutputJSON struct {
+	Id          string `json:"id"`
+	Email       string `json:"email"`
+	DisplayName string `json:"displayName"`
+}
+
+// Create a user from json, returns json
+func (h *UserHandler) NewUser(w http.ResponseWriter, r *http.Request) {
+	data := &UserInputJSON{}
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		utils.ReturnHTTPError(w, http.StatusBadRequest, &utils.ErrorMessage{Detail: "Bad Body"})
+		return
+	}
+
+	user, err := h.userRepo.Create(data.Email, data.DisplayName, data.Password)
+	if err != nil {
+		utils.ReturnHTTPError(w, http.StatusBadRequest, &utils.ErrorMessage{Detail: "Bad Body"})
+		return
+	}
+	resp := &UserOutputJSON{user.Id, user.Email, user.DisplayName}
+
+	// Cast to JSON
+	b, _ := json.Marshal(resp)
+
+	// Prepare response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	w.Write(b)
 }

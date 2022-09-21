@@ -28,6 +28,7 @@ func main() {
 	// Routes
 	r.Get("/user", user.GetUsers)
 	r.Get("/user/{id}", user.GetUser)
+	r.Post("/user", user.NewUser)
 
 	fmt.Println("Starting server...")
 	err := http.ListenAndServe(":3000", r)

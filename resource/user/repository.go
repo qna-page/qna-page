@@ -8,8 +8,8 @@ import (
 
 type UserRepository interface {
 	List() (*[]User, error)
-	FindByID(Id string) (*User, error)
-	Save(user *User) error
+	FindByID(id string) (*User, error)
+	Create(email, displayName, password string) (*User, error)
 }
 
 // Models what we inject into the repo
@@ -32,17 +32,26 @@ func (r *UserRepo) List() (*[]User, error) {
 	return &users, nil
 }
 
-func (r *UserRepo) FindByID(Id string) (*User, error) {
+func (r *UserRepo) FindByID(id string) (*User, error) {
 	var user User
-	err := r.db.Get(&user, "SELECT * FROM user WHERE id=$1", Id)
+	err := r.db.Get(&user, "SELECT * FROM user WHERE id=$1", id)
 	if err != nil {
 		fmt.Println("Error", err)
 	}
 	return &user, nil
 }
 
-// Save - everything is skeleton'ed for now
-func (r *UserRepo) Save(user *User) error {
-	// TODO: implement bcrypt for passwords
-	return nil
+func (r *UserRepo) Create(email, displayName, password string) (*User, error) {
+	newUser := &User{}
+	newUser.GenerateId()
+	newUser.Email = email
+	newUser.DisplayName = displayName
+	newUser.HashPassword(password)
+
+	_, err := r.db.NamedExec("INSERT INTO user (id, email, hash, display_name) VALUES (:id, :email, :hash, :display_name);", *newUser)
+	if err != nil {
+		return nil, err
+	}
+
+	return newUser, nil
 }

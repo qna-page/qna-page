@@ -5,18 +5,9 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
-)
 
-var schema = `
-DROP TABLE IF EXISTS user;
-CREATE TABLE user (
-	id	VARCHAR(250) PRIMARY KEY,
-    name	VARCHAR(250)  DEFAULT '',
-	email	VARCHAR(250) DEFAULT '',
-	password	VARCHAR(250) DEFAULT ''
-);
-INSERT INTO user (id,name,email,password) VALUES('EbXKRm6MuCOqa18j0Mqcx','example','example@example.com', '');
-`
+	"github.com/qna-page/qna-page/resource/user"
+)
 
 func ConnectDB() *sqlx.DB {
 	db, err := sqlx.Connect("sqlite3", "app.db")
@@ -24,7 +15,9 @@ func ConnectDB() *sqlx.DB {
 		panic(err)
 	}
 
-	db.MustExec(schema)
+	// Create tables
+	db.MustExec(user.UserSchema)
+	// db.MustExec(variable.VariableSchema)
 
 	fmt.Println("Successfully connected to DB!")
 
