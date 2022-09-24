@@ -2,8 +2,10 @@ package user
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/qna-page/qna-page/utils"
 )
 
 type UserRepository interface {
@@ -50,7 +52,19 @@ func (r *UserRepo) Create(email, displayName, password string) (*User, error) {
 
 	_, err := r.db.NamedExec("INSERT INTO user (id, email, hash, display_name) VALUES (:id, :email, :hash, :display_name);", *newUser)
 	if err != nil {
-		return nil, err
+		msg := err.Error()
+		if strings.Contains(msg, "user.email") {
+			message := &utils.DBFieldError{Detail: &UserInputJSON{Email: "A user with this email already exists."}}
+			return nil, message
+		}
+
+		if strings.Contains(msg, "user.display_name") {
+			message := &utils.DBFieldError{Detail: &UserInputJSON{DisplayName: "A user with this display name already exists."}}
+			return nil, message
+		}
+
+		// Avoid exposing unhandled errors to end-user
+		return nil, &utils.MaskError{Err: msg}
 	}
 
 	return newUser, nil

@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS user (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_email 
 ON user (email);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_display_name 
+ON user (display_name);
 `
 
 type User struct {

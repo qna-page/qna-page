@@ -51,7 +51,6 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Cast to JSON
-	// TODO: We should use a seperate model without password for added safety
 	b, err := json.Marshal(&user)
 	if err != nil {
 		http.Error(w, err.Error(), 422)
@@ -64,35 +63,33 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-type UserInputJSON struct {
-	Email       string `json:"email"`
-	Password    string `json:"password"`
-	DisplayName string `json:"displayName"`
-}
-
-type UserOutputJSON struct {
-	Id          string `json:"id"`
-	Email       string `json:"email"`
-	DisplayName string `json:"displayName"`
-}
-
 // Create a user from json, returns json
 func (h *UserHandler) NewUser(w http.ResponseWriter, r *http.Request) {
 	data := &UserInputJSON{}
+
+	// Attempt to decode payload
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		utils.ReturnHTTPError(w, http.StatusBadRequest, &utils.ErrorMessage{Detail: "Bad Body"})
+		utils.HTTPError(w, http.StatusUnprocessableEntity, err)
 		return
 	}
 
+	// Validate against model
+	err = data.Validate()
+	if err != nil {
+		utils.HTTPError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// Create in DB
 	user, err := h.userRepo.Create(data.Email, data.DisplayName, data.Password)
 	if err != nil {
-		utils.ReturnHTTPError(w, http.StatusBadRequest, &utils.ErrorMessage{Detail: "Bad Body"})
+		utils.HTTPError(w, http.StatusBadRequest, err)
 		return
 	}
-	resp := &UserOutputJSON{user.Id, user.Email, user.DisplayName}
 
-	// Cast to JSON
+	// Process response
+	resp := &UserOutputJSON{user.Id, user.Email, user.DisplayName}
 	b, _ := json.Marshal(resp)
 
 	// Prepare response
